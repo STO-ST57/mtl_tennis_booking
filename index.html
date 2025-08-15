@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tennis MTL - Booking</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+            font-size: 1.1em;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            background-color: white;
+            color: #333;
+            transition: border-color 0.3s ease;
+            cursor: pointer;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        select:hover {
+            border-color: #667eea;
+        }
+
+        select[multiple] {
+            height: 120px;
+        }
+
+        select[multiple] option {
+            padding: 8px 12px;
+        }
+
+        select[multiple] option:checked {
+            background-color: #667eea;
+            color: white;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-top: 10px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tennis MTL</h1>
+        
+        <form id="bookingForm">
+            <div class="form-group">
+                <label for="date">Date:</label>
+                <select id="date" name="date" multiple required>
+                    <option value="">Select dates (hold Ctrl/Cmd to select multiple)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="park">Park:</label>
+                <select id="park" name="siteId" required>
+                    <option value="">Select a park</option>
+                    <option value="1070" selected>Parc Arthur Therrien</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="arrondissement">Arrondissement:</label>
+                <select id="arrondissement" name="boroughIds" required>
+                    <option value="">Select an arrondissement</option>
+                    <option value="1" selected>Verdun</option>
+                </select>
+            </div>
+
+            <button type="submit" class="submit-btn">Submit</button>
+        </form>
+    </div>
+
+    <script>
+        // Populate date options with today and next 5 days
+        function populateDates() {
+            const dateSelect = document.getElementById('date');
+            const today = new Date();
+            
+            // Clear existing options except the first one
+            while (dateSelect.children.length > 1) {
+                dateSelect.removeChild(dateSelect.lastChild);
+            }
+            
+            // Add options for today and next 5 days
+            for (let i = 0; i < 3; i++) {
+                const date = new Date(today);
+                date.setDate(today.getDate() + i);
+                
+                const option = document.createElement('option');
+                option.value = date.toISOString().split('T')[0]; // YYYY-MM-DD format
+                option.textContent = date.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+                dateSelect.appendChild(option);
+            }
+        }
+
+        // Initialize dates when page loads
+        document.addEventListener('DOMContentLoaded', populateDates);
+
+        document.getElementById('bookingForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Get form values
+            const dateSelect = document.getElementById('date');
+            const selectedDates = Array.from(dateSelect.selectedOptions).map(option => option.value);
+            const siteId = document.getElementById('park').value;
+            const boroughIds = document.getElementById('arrondissement').value;
+            
+            // Validate that all fields are selected
+            if (selectedDates.length === 0 || !siteId || !boroughIds) {
+                alert('Please select at least one date, a park, and an arrondissement before submitting.');
+                return;
+            }
+            
+            // Convert dates to the format expected by the API (YYYY-MM-DDTHH:mm:ss.SSS-04:00)
+            const formattedDates = selectedDates.map(dateStr => {
+                const selectedDate = new Date(dateStr);
+                return selectedDate.toISOString().replace('Z', '-04:00');
+            });
+            
+            // Construct the search parameters object
+            const searchParam = {
+                filter: {
+                    isCollapsed: false,
+                    value: {
+                        dates: formattedDates,
+                        facilityTypeIds: "175,114", // Tennis facility types
+                        boroughIds: boroughIds,
+                        siteId: siteId
+                    }
+                },
+                search: "tennis",
+                sortable: {
+                    isOrderAsc: true,
+                    column: "facility.name"
+                }
+            };
+            
+            // Encode the search parameters
+            const encodedSearchParam = encodeURIComponent(JSON.stringify(searchParam));
+            
+            // Construct the full URL
+            const baseUrl = "https://loisirs.montreal.ca/IC3/#/U6510/search/";
+            const url = `${baseUrl}?searchParam=${encodedSearchParam}&hasBoroughFilter=true`;
+            
+            // Open the URL in a new tab
+            window.open(url, '_blank');
+            
+            console.log('Opening URL:', url);
+            console.log('Selected dates:', selectedDates);
+        });
+    </script>
+</body>
+</html>
