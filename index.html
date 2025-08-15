@@ -236,11 +236,10 @@
             const dateSelect = document.getElementById('date');
             const selectedDates = Array.from(dateSelect.selectedOptions).map(option => option.value);
             const siteId = document.getElementById('park').value;
-            const boroughIds = document.getElementById('arrondissement').value;
             
             // Validate that all fields are selected
-            if (selectedDates.length === 0 || !siteId || !boroughIds) {
-                alert('Please select at least one date, a park, and an arrondissement before submitting.');
+            if (selectedDates.length === 0 || !siteId) {
+                alert('Please select at least one date and a park before submitting.');
                 return;
             }
             
@@ -259,7 +258,6 @@
                     value: {
                         dates: formattedDates,
                         facilityTypeIds: "175,114", // Tennis facility types
-                        boroughIds: boroughIds,
                         siteId: siteId
                     }
                 },
