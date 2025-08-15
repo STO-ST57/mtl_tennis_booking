@@ -196,7 +196,9 @@
             
             // Convert dates to the format expected by the API (YYYY-MM-DDTHH:mm:ss.SSS-04:00)
             const formattedDates = selectedDates.map(dateStr => {
-                const selectedDate = new Date(dateStr);
+                // Create date in local timezone to avoid UTC conversion issues
+                const [year, month, day] = dateStr.split('-').map(Number);
+                const selectedDate = new Date(year, month - 1, day); // month is 0-indexed
                 return selectedDate.toISOString().replace('Z', '-04:00');
             });
             
